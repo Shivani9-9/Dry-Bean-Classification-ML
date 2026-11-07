@@ -155,13 +155,13 @@ The following table presents the actual evaluation results obtained from the tes
 
 The following graph compares the accuracy of all five classification models.
 
-![Accuracy Comparison of Five ML Models](images/accuracy_comparison.png)
+![Accuracy Comparison of Five ML Models](Dataset/accuracy_comparison.png)
 
 ### 7.2 Performance Comparison Across Six Metrics
 
 The heatmap provides a visual comparison of all five models across the six evaluation metrics.
 
-![Performance Comparison Heatmap](images/model_metrics_heatmap.png)
+![Performance Comparison Heatmap](Dataset/model_metrics_heatmap.png)
 
 ## 8. Model Performance Observations
 
