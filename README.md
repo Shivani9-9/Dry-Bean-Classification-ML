@@ -260,15 +260,15 @@ The project repository is organised as follows:
 Dry-Bean-Classification-ML/
 │
 ├── streamlit_app.py
-├── 2026aj05712_ML_Assignment2.ipynb
-├── dry_bean_dataset.csv
+├── model_training.ipynb
 ├── test_data.csv
 ├── requirements.txt
 ├── README.md
 │
-├── images/
+├── Dataset/
 │   ├── accuracy_comparison.png
 │   └── model_metrics_heatmap.png
+|   └── dry_bean_dataset.csv
 │
 ├── saved_models/
 │   ├── logistic_regression.joblib
