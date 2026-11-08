@@ -32,7 +32,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(_file_).resolve().parent
 MODEL_DIR = BASE_DIR / "saved_models"
 PREPROCESSING_DIR = BASE_DIR / "preprocessing"
 
@@ -201,7 +201,19 @@ def inject_custom_css(mode: str) -> None:
             "primary": "#258451",
             "border": "#d6e2da",
             "hero1": "#174a32",
-            "hero2": "#53a873"
+            "hero2": "#53a873",
+            "info_bg": "#eaf2fd",
+            "info_border": "#93c5fd",
+            "info_text": "#1e40af",
+            "success_bg": "#ebf7ee",
+            "success_border": "#86efac",
+            "success_text": "#166534",
+            "warning_bg": "#fffbeb",
+            "warning_border": "#fde68a",
+            "warning_text": "#92400e",
+            "error_bg": "#fef2f2",
+            "error_border": "#fca5a5",
+            "error_text": "#991b1b",
         },
         "Dark": {
             "bg": "#101114",
@@ -212,30 +224,51 @@ def inject_custom_css(mode: str) -> None:
             "primary": "#a99aff",
             "border": "#343840",
             "hero1": "#17152e",
-            "hero2": "#55469c"
+            "hero2": "#55469c",
+            "info_bg": "#16233b",
+            "info_border": "#2563eb",
+            "info_text": "#bfdbfe",
+            "success_bg": "#122a1c",
+            "success_border": "#16a34a",
+            "success_text": "#bbf7d0",
+            "warning_bg": "#2e210e",
+            "warning_border": "#d97706",
+            "warning_text": "#fde68a",
+            "error_bg": "#2e1515",
+            "error_border": "#dc2626",
+            "error_text": "#fecaca",
         },
     }
 
     light, dark = palette["Light"], palette["Dark"]
 
     def vars_for(p):
-        return ";".join(f"--{k}:{v}" for k, v in p.items())
+        vars_str = ";".join(f"--{k}:{v}" for k, v in p.items())
+        # Also bridge to Streamlit's native theme CSS variables
+        vars_str += (
+            f";--text-color:{p['text']}"
+            f";--background-color:{p['bg']}"
+            f";--secondary-background-color:{p['surface2']}"
+            f";--primary-color:{p['primary']}"
+        )
+        return vars_str
 
     if mode == "Dark":
-        theme_css = f":root{{{vars_for(dark)}}}"
+        theme_css = f":root, .stApp {{{vars_for(dark)}}}"
     elif mode == "Light":
-        theme_css = f":root{{{vars_for(light)}}}"
+        theme_css = f":root, .stApp {{{vars_for(light)}}}"
     else:
         theme_css = (
-            f":root{{{vars_for(light)}}}"
+            f":root, .stApp {{{vars_for(light)}}}"
             f"@media(prefers-color-scheme:dark)"
-            f"{{:root{{{vars_for(dark)}}}}}"
+            f"{{:root, .stApp {{{vars_for(dark)}}}}}"
         )
 
     st.markdown(f'''
     <style>
     {theme_css}
 
+    /* Base application surface & text */
     html, body, .stApp,
     [data-testid="stAppViewContainer"],
     [data-testid="stMain"],
@@ -246,6 +279,7 @@ def inject_custom_css(mode: str) -> None:
         color: var(--text) !important;
     }}
 
+    /* Sidebar container & borders */
     [data-testid="stSidebar"] {{
         background: var(--surface) !important;
         border-right: 1px solid var(--border);
@@ -255,6 +289,42 @@ def inject_custom_css(mode: str) -> None:
         color: var(--text);
     }}
 
+    /* Typography & headings across all sections */
+    h1, h2, h3, h4, h5, h6,
+    [data-testid="stMarkdownContainer"] h1,
+    [data-testid="stMarkdownContainer"] h2,
+    [data-testid="stMarkdownContainer"] h3,
+    [data-testid="stMarkdownContainer"] h4,
+    [data-testid="stMarkdownContainer"] h5,
+    [data-testid="stMarkdownContainer"] h6,
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li,
+    [data-testid="stMarkdownContainer"] span,
+    [data-testid="stWidgetLabel"],
+    [data-testid="stWidgetLabel"] *,
+    label,
+    label * {{
+        color: var(--text) !important;
+        -webkit-text-fill-color: var(--text) !important;
+    }}
+
+    /* Captions and muted supporting text */
+    [data-testid="stCaptionContainer"],
+    [data-testid="stCaptionContainer"] *,
+    .stCaption,
+    .stCaption * {{
+        color: var(--muted) !important;
+        -webkit-text-fill-color: var(--muted) !important;
+    }}
+
+    /* Dividers */
+    hr, [data-testid="stDivider"] {{
+        border-color: var(--border) !important;
+        background-color: var(--border) !important;
+        opacity: 0.8 !important;
+    }}
+
+    /* Layout entrance animations */
     .block-container {{
         padding-top: 1.8rem;
         animation: pageIn .8s ease both;
@@ -275,9 +345,10 @@ def inject_custom_css(mode: str) -> None:
         50% {{ transform: translateY(-8px) rotate(4deg); }}
     }}
 
+    /* Hero banners */
     .hero {{
         background: linear-gradient(115deg, var(--hero1), var(--hero2));
-        color: white !important;
+        color: #ffffff !important;
         padding: 1.7rem 1.8rem;
         border-radius: 22px;
         margin-bottom: 1rem;
@@ -285,8 +356,10 @@ def inject_custom_css(mode: str) -> None:
         box-shadow: 0 12px 30px #0002;
     }}
 
-    .hero h1, .hero p {{
-        color: white !important;
+    .hero,
+    .hero * {{
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
     }}
 
     .hero h1 {{
@@ -305,23 +378,37 @@ def inject_custom_css(mode: str) -> None:
         animation: floatBean 2.3s ease-in-out infinite;
     }}
 
+    /* Metric cards */
     div[data-testid="stMetric"] {{
         background: var(--surface) !important;
-        border: 1px solid var(--border);
+        border: 1px solid var(--border) !important;
         border-radius: 15px;
         padding: 14px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }}
 
-    div[data-testid="stMetric"] * {{
+    div[data-testid="stMetricLabel"],
+    div[data-testid="stMetricLabel"] * {{
+        color: var(--muted) !important;
+        -webkit-text-fill-color: var(--muted) !important;
+        font-size: 0.88rem !important;
+        font-weight: 600 !important;
+    }}
+
+    div[data-testid="stMetricValue"],
+    div[data-testid="stMetricValue"] * {{
         color: var(--text) !important;
+        -webkit-text-fill-color: var(--text) !important;
+        font-weight: 800 !important;
+        font-size: 1.6rem !important;
     }}
 
-    /* File uploader - Main container */
+    /* File uploader container */
     div[data-testid="stFileUploader"] {{
         background: var(--surface) !important;
         color: var(--text) !important;
-        border-color: var(--border) !important;
-        border-radius: 13px;
+        border: 1px dashed var(--border) !important;
+        border-radius: 14px !important;
     }}
 
     [data-testid="stFileUploader"] section,
@@ -331,7 +418,25 @@ def inject_custom_css(mode: str) -> None:
         border-color: var(--border) !important;
     }}
 
-    /* Uploaded CSV file - FIX WHITE BACKGROUND */
+    [data-testid="stFileUploaderDropzoneInstructions"],
+    [data-testid="stFileUploaderDropzoneInstructions"] * {{
+        color: var(--text) !important;
+        -webkit-text-fill-color: var(--text) !important;
+    }}
+
+    [data-testid="stFileUploaderDropzone"] small,
+    [data-testid="stFileUploaderDropzoneInstructions"] small {{
+        color: var(--muted) !important;
+        -webkit-text-fill-color: var(--muted) !important;
+    }}
+
+    [data-testid="stFileUploaderDropzone"] svg {{
+        fill: var(--muted) !important;
+        stroke: var(--muted) !important;
+        color: var(--muted) !important;
+    }}
+
+    /* Uploaded CSV file card */
     [data-testid="stFileUploader"] [data-testid="stFileUploaderFile"] {{
         background: var(--surface2) !important;
         background-color: var(--surface2) !important;
@@ -340,19 +445,16 @@ def inject_custom_css(mode: str) -> None:
         border-radius: 12px !important;
     }}
 
-    /* Uploaded file content */
     [data-testid="stFileUploader"] [data-testid="stFileUploaderFile"] * {{
         color: var(--text) !important;
         -webkit-text-fill-color: var(--text) !important;
     }}
 
-    /* Uploaded file internal containers */
     [data-testid="stFileUploader"] [data-testid="stFileUploaderFile"] > div {{
         background: transparent !important;
         background-color: transparent !important;
     }}
 
-    /* Uploaded filename */
     [data-testid="stFileUploader"] [data-testid="stFileUploaderFileName"],
     [data-testid="stFileUploader"] [data-testid="stFileUploaderFileName"] *,
     [data-testid="stFileUploader"] .uploadedFileName,
@@ -362,52 +464,149 @@ def inject_custom_css(mode: str) -> None:
         font-weight: 600 !important;
     }}
 
-    /* Upload button */
-    [data-testid="stFileUploader"] button {{
+    /* Upload button & file removal buttons */
+    [data-testid="stFileUploader"] button,
+    [data-testid="stFileUploader"] button * {{
         background: var(--surface2) !important;
         background-color: var(--surface2) !important;
         color: var(--text) !important;
+        -webkit-text-fill-color: var(--text) !important;
         border: 1px solid var(--border) !important;
     }}
 
-    /* Remove uploaded file button */
-    [data-testid="stFileUploader"] [data-testid="stFileUploaderFile"] button {{
-        background: var(--surface2) !important;
-        color: var(--text) !important;
-        border: 1px solid var(--border) !important;
+    [data-testid="stFileUploader"] button:hover {{
+        background: var(--surface) !important;
+        border-color: var(--primary) !important;
     }}
 
-    /* Supporting upload information */
-    [data-testid="stFileUploader"] small {{
-        color: var(--muted) !important;
+    [data-testid="stFileUploader"] button:hover * {{
+        color: var(--primary) !important;
+        -webkit-text-fill-color: var(--primary) !important;
     }}
 
-    /* General inputs */
+    /* General text inputs & selectbox control */
     input, textarea,
-    [data-baseweb="select"] > div {{
+    [data-testid="stTextInput"] input,
+    [data-testid="stNumberInput"] input {{
         background: var(--surface2) !important;
+        background-color: var(--surface2) !important;
         color: var(--text) !important;
-        border-color: var(--border) !important;
+        -webkit-text-fill-color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 9px !important;
     }}
 
-    /* Expander */
+    input::placeholder, textarea::placeholder {{
+        color: var(--muted) !important;
+        -webkit-text-fill-color: var(--muted) !important;
+        opacity: 0.8 !important;
+    }}
+
+    /* BaseWeb Select dropdown box */
+    [data-baseweb="select"] {{
+        border-radius: 9px !important;
+    }}
+
+    [data-baseweb="select"] > div {{
+        background-color: var(--surface2) !important;
+        background: var(--surface2) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 9px !important;
+    }}
+
+    [data-baseweb="select"] * {{
+        color: var(--text) !important;
+        -webkit-text-fill-color: var(--text) !important;
+    }}
+
+    [data-baseweb="select"] svg {{
+        fill: var(--text) !important;
+        stroke: var(--text) !important;
+    }}
+
+    /* BaseWeb dropdown popup / menu */
+    [data-baseweb="popover"],
+    [data-baseweb="popover"] > div,
+    [data-baseweb="menu"],
+    ul[role="listbox"],
+    div[role="listbox"] {{
+        background-color: var(--surface) !important;
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25) !important;
+    }}
+
+    ul[role="listbox"] li,
+    ul[role="listbox"] li * {{
+        background-color: transparent !important;
+        color: var(--text) !important;
+        -webkit-text-fill-color: var(--text) !important;
+    }}
+
+    ul[role="listbox"] li:hover,
+    ul[role="listbox"] li[aria-selected="true"],
+    ul[role="listbox"] li:focus {{
+        background-color: var(--surface2) !important;
+        color: var(--primary) !important;
+        -webkit-text-fill-color: var(--primary) !important;
+    }}
+
+    /* Radio buttons */
+    [data-testid="stRadio"],
+    [data-testid="stRadio"] *,
+    [data-baseweb="radio"],
+    [data-baseweb="radio"] * {{
+        color: var(--text) !important;
+        -webkit-text-fill-color: var(--text) !important;
+    }}
+
+    [data-testid="stRadio"] label:hover,
+    [data-testid="stRadio"] label:hover * {{
+        color: var(--primary) !important;
+        -webkit-text-fill-color: var(--primary) !important;
+    }}
+
+    /* Expander containers */
     [data-testid="stExpander"] {{
         background: var(--surface) !important;
         color: var(--text) !important;
-        border-color: var(--border) !important;
-        border-radius: 13px;
+        border: 1px solid var(--border) !important;
+        border-radius: 13px !important;
+        overflow: hidden !important;
     }}
 
-    [data-testid="stExpander"] summary,
-    [data-testid="stExpander"] summary p,
-    [data-testid="stExpander"] summary span {{
+    [data-testid="stExpander"] summary {{
         background: var(--surface2) !important;
+        color: var(--text) !important;
+        border-bottom: 1px solid var(--border) !important;
+        transition: background 0.2s ease;
+    }}
+
+    [data-testid="stExpander"] summary:hover {{
+        background: var(--surface) !important;
+    }}
+
+    [data-testid="stExpander"] summary * {{
+        color: var(--text) !important;
+        -webkit-text-fill-color: var(--text) !important;
+    }}
+
+    [data-testid="stExpander"] summary svg {{
+        fill: var(--text) !important;
+        stroke: var(--text) !important;
         color: var(--text) !important;
     }}
 
     [data-testid="stExpander"] details,
-    [data-testid="stExpander"] details > div {{
+    [data-testid="stExpander"] details > div,
+    [data-testid="stExpander"] [data-testid="stExpanderDetails"] {{
         background: var(--surface) !important;
+        color: var(--text) !important;
+    }}
+
+    [data-testid="stExpander"] [data-testid="stExpanderDetails"] * {{
         color: var(--text) !important;
     }}
 
@@ -415,19 +614,33 @@ def inject_custom_css(mode: str) -> None:
     .stButton button,
     .stDownloadButton button {{
         border-radius: 10px;
-        transition: transform .18s ease;
+        transition: transform .18s ease, background .18s ease, border-color .18s ease;
         color: var(--text) !important;
         background: var(--surface2) !important;
         border: 1px solid var(--border) !important;
         font-weight: 650 !important;
     }}
 
+    .stButton button *,
+    .stDownloadButton button * {{
+        color: var(--text) !important;
+        -webkit-text-fill-color: var(--text) !important;
+    }}
+
     .stButton button:hover,
     .stDownloadButton button:hover {{
         transform: translateY(-2px);
+        background: var(--surface) !important;
+        border-color: var(--primary) !important;
     }}
 
-    /* Home navigation */
+    .stButton button:hover *,
+    .stDownloadButton button:hover * {{
+        color: var(--primary) !important;
+        -webkit-text-fill-color: var(--primary) !important;
+    }}
+
+    /* Home navigation button in sidebar */
     [data-testid="stSidebar"] .st-key-sidebar_home_button button,
     [data-testid="stSidebar"] .st-key-sidebar_home_button button * {{
         background: transparent !important;
@@ -452,7 +665,7 @@ def inject_custom_css(mode: str) -> None:
         transform: none !important;
     }}
 
-    /* Sidebar navigation arrows */
+    /* Sidebar navigation arrow buttons */
     .st-key-sidebar_back_button button,
     .st-key-sidebar_forward_button button {{
         min-height: 2.55rem !important;
@@ -460,6 +673,12 @@ def inject_custom_css(mode: str) -> None:
         color: var(--text) !important;
         background: var(--surface2) !important;
         border: 1px solid var(--border) !important;
+    }}
+
+    .st-key-sidebar_back_button button *,
+    .st-key-sidebar_forward_button button * {{
+        color: var(--text) !important;
+        -webkit-text-fill-color: var(--text) !important;
     }}
 
     .sidebar-current-page {{
@@ -470,21 +689,137 @@ def inject_custom_css(mode: str) -> None:
         line-height: 1.35;
     }}
 
-    /* Alerts */
-    [data-testid="stAlert"] {{
+    /* Alerts - Outer wrapper and inner text wrappers reset to avoid double borders */
+    [data-testid="stAlert"],
+    .stAlert {{
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }}
+
+    [data-testid*="stAlertContent"],
+    [data-testid*="stAlertContent"] > div,
+    [data-testid*="stAlertContent"] [data-testid="stMarkdownContainer"] {{
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }}
+
+    /* Single clean alert box on stAlertContainer only */
+    [data-testid="stAlertContainer"],
+    .stAlertContainer {{
+        border-radius: 12px !important;
+        padding: 0.9rem 1.2rem !important;
+        border: 1px solid var(--border) !important;
+        background-color: var(--surface2) !important;
         background: var(--surface2) !important;
         color: var(--text) !important;
+        box-shadow: none !important;
     }}
 
-    [data-testid="stAlert"] p {{
+    [data-testid="stAlertContainer"] *,
+    [data-testid="stAlertContainer"] p {{
+        color: var(--text) !important;
+        -webkit-text-fill-color: var(--text) !important;
+    }}
+
+    /* Info Alert (Workflow, Notes) */
+    [data-testid="stAlertContainer"]:has([data-testid*="Info"]) {{
+        background-color: var(--info_bg) !important;
+        background: var(--info_bg) !important;
+        border: 1px solid var(--info_border) !important;
+    }}
+
+    [data-testid="stAlertContainer"]:has([data-testid*="Info"]) *,
+    [data-testid="stAlertContainer"]:has([data-testid*="Info"]) p {{
+        color: var(--info_text) !important;
+        -webkit-text-fill-color: var(--info_text) !important;
+    }}
+
+    [data-testid="stAlertContainer"]:has([data-testid*="Info"]) svg {{
+        fill: var(--info_text) !important;
+        stroke: var(--info_text) !important;
+    }}
+
+    /* Success Alert (Strengths) */
+    [data-testid="stAlertContainer"]:has([data-testid*="Success"]) {{
+        background-color: var(--success_bg) !important;
+        background: var(--success_bg) !important;
+        border: 1px solid var(--success_border) !important;
+    }}
+
+    [data-testid="stAlertContainer"]:has([data-testid*="Success"]) *,
+    [data-testid="stAlertContainer"]:has([data-testid*="Success"]) p {{
+        color: var(--success_text) !important;
+        -webkit-text-fill-color: var(--success_text) !important;
+    }}
+
+    [data-testid="stAlertContainer"]:has([data-testid*="Success"]) svg {{
+        fill: var(--success_text) !important;
+        stroke: var(--success_text) !important;
+    }}
+
+    /* Warning Alert (Limitations) */
+    [data-testid="stAlertContainer"]:has([data-testid*="Warning"]) {{
+        background-color: var(--warning_bg) !important;
+        background: var(--warning_bg) !important;
+        border: 1px solid var(--warning_border) !important;
+    }}
+
+    [data-testid="stAlertContainer"]:has([data-testid*="Warning"]) *,
+    [data-testid="stAlertContainer"]:has([data-testid*="Warning"]) p {{
+        color: var(--warning_text) !important;
+        -webkit-text-fill-color: var(--warning_text) !important;
+    }}
+
+    [data-testid="stAlertContainer"]:has([data-testid*="Warning"]) svg {{
+        fill: var(--warning_text) !important;
+        stroke: var(--warning_text) !important;
+    }}
+
+    /* Error Alert */
+    [data-testid="stAlertContainer"]:has([data-testid*="Error"]) {{
+        background-color: var(--error_bg) !important;
+        background: var(--error_bg) !important;
+        border: 1px solid var(--error_border) !important;
+    }}
+
+    [data-testid="stAlertContainer"]:has([data-testid*="Error"]) *,
+    [data-testid="stAlertContainer"]:has([data-testid*="Error"]) p {{
+        color: var(--error_text) !important;
+        -webkit-text-fill-color: var(--error_text) !important;
+    }}
+
+    [data-testid="stAlertContainer"]:has([data-testid*="Error"]) svg {{
+        fill: var(--error_text) !important;
+        stroke: var(--error_text) !important;
+    }}
+
+    /* Dataframe & Tables */
+    div[data-testid="stDataFrame"],
+    [data-testid="stTable"] {{
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+    }}
+
+    table {{
         color: var(--text) !important;
     }}
 
-    /* Markdown content */
-    [data-testid="stMarkdownContainer"] p,
-    [data-testid="stMarkdownContainer"] li,
-    label, h1, h2, h3, h4 {{
-        color: var(--text);
+    th, td {{
+        color: var(--text) !important;
+        border-color: var(--border) !important;
+    }}
+
+    /* Spinner */
+    [data-testid="stSpinner"],
+    [data-testid="stSpinner"] * {{
+        color: var(--text) !important;
+        -webkit-text-fill-color: var(--text) !important;
     }}
 
     /* Bean illustration */
@@ -501,24 +836,28 @@ def inject_custom_css(mode: str) -> None:
         text-align: center;
         border-radius: 20px;
         background: linear-gradient(120deg, var(--hero1), var(--hero2));
-        color: white !important;
+        color: #ffffff !important;
         animation: pageIn 1.2s ease both;
     }}
 
+    .page-end,
     .page-end * {{
-        color: white !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
     }}
 
-    /* Tooltip */
+    /* Tooltips */
     [data-baseweb="tooltip"],
+    [data-baseweb="tooltip"] > div,
     [data-testid="stTooltipContent"],
     [role="tooltip"] {{
         background: var(--surface2) !important;
+        background-color: var(--surface2) !important;
         color: var(--text) !important;
         border: 1px solid var(--border) !important;
         border-radius: 9px !important;
         padding: 10px 13px !important;
-        box-shadow: 0 5px 18px #0003 !important;
+        box-shadow: 0 5px 18px rgba(0, 0, 0, 0.25) !important;
         font-size: 0.85rem !important;
         font-weight: 500 !important;
     }}
@@ -528,6 +867,14 @@ def inject_custom_css(mode: str) -> None:
     [role="tooltip"] * {{
         color: var(--text) !important;
         -webkit-text-fill-color: var(--text) !important;
+    }}
+
+    /* Code blocks */
+    code, kbd, samp, pre {{
+        background: var(--surface2) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
     }}
 
     /* Accessibility */
@@ -571,7 +918,10 @@ def calculate_metrics(model_name, model, X_test, y_test, artifacts):
     X_model = X_test
 
     if model_name in artifacts["scaled_models"]:
-        X_model = artifacts["scaler"].transform(X_test)
+        scaled_array = artifacts["scaler"].transform(X_test)
+        X_model = pd.DataFrame(
+            scaled_array, columns=artifacts["feature_names"], index=X_test.index
+        )
 
     predictions = model.predict(X_model)
     probabilities = model.predict_proba(X_model)
@@ -616,10 +966,10 @@ def show_model_explanation(model_name, metrics=None):
     st.caption(info["subtitle"])
 
     with st.expander("📘 Model explanation — how does it work?", expanded=True):
-        st.markdown(f"**Core concept**  \n{info['concept']}")
-        st.markdown(f"**Typical workflow**  \n{info['workflow']}")
-        st.markdown(f"**Strengths**  \n{info['strengths']}")
-        st.markdown(f"**Limitations**  \n{info['limitations']}")
+        st.markdown(f"*Core concept*  \n{info['concept']}")
+        st.markdown(f"*Typical workflow*  \n{info['workflow']}")
+        st.markdown(f"*Strengths*  \n{info['strengths']}")
+        st.markdown(f"*Limitations*  \n{info['limitations']}")
         st.info(info["original_result"])
 
     if metrics is not None:
@@ -627,35 +977,62 @@ def show_model_explanation(model_name, metrics=None):
             for metric_name, description in METRIC_INFO.items():
                 value = metrics[metric_name]
                 value_text = "N/A" if pd.isna(value) else f"{value:.4f}"
-                st.markdown(f"**{metric_name}: {value_text}** — {description}")
+                st.markdown(f"*{metric_name}: {value_text}* — {description}")
 
 
-def show_confusion_matrix(y_true, y_pred, class_names, title):
-    """Render a confusion matrix for one selected model."""
+def show_confusion_matrix(y_true, y_pred, class_names, title, theme_mode: str = "System"):
+    """Render a confusion matrix for one selected model with theme-aware colors."""
     matrix = confusion_matrix(
         y_true,
         y_pred,
         labels=np.arange(len(class_names)),
     )
 
-    fig, ax = plt.subplots(figsize=(9, 6))
-    sns.heatmap(
+    if theme_mode == "Dark":
+        surface_color = "#191b20"
+        text_color = "#f2f4f3"
+        border_color = "#343840"
+        linecolor = "#22252c"
+    else:
+        surface_color = "#ffffff"
+        text_color = "#18251e"
+        border_color = "#d6e2da"
+        linecolor = "#ffffff"
+
+    fig, ax = plt.subplots(figsize=(9, 6), facecolor=surface_color)
+    ax.set_facecolor(surface_color)
+
+    heatmap = sns.heatmap(
         matrix,
         annot=True,
         fmt="d",
         cmap="Purples",
         xticklabels=class_names,
         yticklabels=class_names,
-        linewidths=0.5,
+        linewidths=0.8,
+        linecolor=linecolor,
         ax=ax,
+        cbar_kws={"shrink": 0.85},
     )
-    ax.set_title(title, fontsize=14, fontweight="bold", pad=14)
-    ax.set_xlabel("Predicted class")
-    ax.set_ylabel("Actual class")
-    plt.xticks(rotation=40, ha="right")
-    plt.yticks(rotation=0)
-    plt.tight_layout()
 
+    ax.set_title(title, fontsize=14, fontweight="bold", pad=14, color=text_color)
+    ax.set_xlabel("Predicted class", fontsize=11, fontweight="bold", labelpad=10, color=text_color)
+    ax.set_ylabel("Actual class", fontsize=11, fontweight="bold", labelpad=10, color=text_color)
+
+    ax.tick_params(colors=text_color, which="both", labelsize=10)
+    plt.setp(ax.get_xticklabels(), color=text_color, rotation=40, ha="right", fontweight="500")
+    plt.setp(ax.get_yticklabels(), color=text_color, rotation=0, fontweight="500")
+
+    for spine in ax.spines.values():
+        spine.set_color(border_color)
+
+    if heatmap.collections and heatmap.collections[0].colorbar:
+        cbar = heatmap.collections[0].colorbar
+        cbar.ax.yaxis.set_tick_params(color=text_color, labelsize=9)
+        plt.setp(cbar.ax.get_yticklabels(), color=text_color)
+        cbar.outline.set_edgecolor(border_color)
+
+    plt.tight_layout()
     st.pyplot(fig, use_container_width=True)
     plt.close(fig)
 
@@ -707,12 +1084,27 @@ def _set_sidebar_target(target: str) -> None:
     if target.startswith("🤖 "):
         st.session_state["sidebar_model_link"] = target[2:]
         st.session_state["sidebar_bean_link"] = None
+        st.session_state["active_nav_section"] = "model"
     elif target.startswith("🫘 "):
         st.session_state["sidebar_model_link"] = None
         st.session_state["sidebar_bean_link"] = target[2:]
+        st.session_state["active_nav_section"] = "bean"
     else:
         st.session_state["sidebar_model_link"] = None
         st.session_state["sidebar_bean_link"] = None
+        st.session_state["active_nav_section"] = None
+
+
+def on_model_select() -> None:
+    if st.session_state.get("sidebar_model_link") is not None:
+        st.session_state["sidebar_bean_link"] = None
+        st.session_state["active_nav_section"] = "model"
+
+
+def on_bean_select() -> None:
+    if st.session_state.get("sidebar_bean_link") is not None:
+        st.session_state["sidebar_model_link"] = None
+        st.session_state["active_nav_section"] = "bean"
 
 
 def go_to_home() -> None:
@@ -753,9 +1145,9 @@ with st.sidebar:
               on_click=go_to_home, use_container_width=True,
               help="Home")
     nav_left, nav_right = st.columns(2)
-    nav_left.button("◀", key="sidebar_back_button", on_click=go_to_previous,
+    nav_left.button("◀️", key="sidebar_back_button", on_click=go_to_previous,
                     use_container_width=True, help="Previous Page")
-    nav_right.button("▶", key="sidebar_forward_button", on_click=go_to_next,
+    nav_right.button("▶️", key="sidebar_forward_button", on_click=go_to_next,
                      use_container_width=True, help="Next Page")
     st.divider()
 
@@ -768,17 +1160,17 @@ with st.sidebar:
 
     st.markdown("## 📌 Project Information")
     st.markdown("""
-    **Project:** Dry Bean Classification
+    *Project:* Dry Bean Classification
 
-    **Dataset:** UCI Dry Bean Dataset
+    *Dataset:* UCI Dry Bean Dataset
 
-    **Classification:** Multiclass
+    *Classification:* Multiclass
 
-    **Input Features:** 17
+    *Input Features:* 17
 
-    **Bean Classes:** 7
+    *Bean Classes:* 7
 
-    **Trained Models:** 5
+    *Trained Models:* 5
     """)
 
     st.divider()
@@ -786,6 +1178,7 @@ with st.sidebar:
     selected_model_page = st.radio(
         "Choose a model", list(MODEL_INFO.keys()), index=None,
         key="sidebar_model_link", label_visibility="collapsed",
+        on_change=on_model_select,
         format_func=lambda name: f"◉  {name}"
     )
 
@@ -794,12 +1187,18 @@ with st.sidebar:
     selected_bean_page = st.radio(
         "Choose a bean class", BEAN_NAMES, index=None,
         key="sidebar_bean_link", label_visibility="collapsed",
+        on_change=on_bean_select,
         format_func=lambda name: f"🫘  {name}"
     )
 
     st.caption("The app loads saved models only. It does not retrain them.")
 
-if selected_model_page:
+active_section = st.session_state.get("active_nav_section")
+if active_section == "bean" and selected_bean_page:
+    selected_page = f"🫘 {selected_bean_page}"
+elif active_section == "model" and selected_model_page:
+    selected_page = f"🤖 {selected_model_page}"
+elif selected_model_page:
     selected_page = f"🤖 {selected_model_page}"
 elif selected_bean_page:
     selected_page = f"🫘 {selected_bean_page}"
@@ -841,8 +1240,9 @@ BEAN_INFO = {
     "SIRA": ("Medium-sized bean with a gently elongated oval form.", "#a86e4b", "Represented by the same 17 input features as other classes."),
 }
 
-def bean_svg(bean_name: str, bean_color: str) -> str:
+def bean_svg(bean_name: str, bean_color: str, theme_mode: str = "System") -> str:
     import base64
+    text_color = "#f2f4f3" if theme_mode == "Dark" else "#18251e"
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300" viewBox="0 0 600 300">'
         '<defs><radialGradient id="g" cx="35%" cy="30%"><stop offset="0" stop-color="#fff2d5"/>'
@@ -853,7 +1253,7 @@ def bean_svg(bean_name: str, bean_color: str) -> str:
         'fill="url(#g)" stroke="#70462f" stroke-width="7"/>'
         '<path d="M185 112 C235 75 310 90 330 125" fill="none" stroke="#fff" '
         'stroke-width="13" opacity=".35" stroke-linecap="round"/>'
-        f'<text x="300" y="286" text-anchor="middle" font-family="Arial" font-size="22" fill="#777">{bean_name}</text>'
+        f'<text x="300" y="286" text-anchor="middle" font-family="Arial" font-size="22" font-weight="bold" fill="{text_color}">{bean_name}</text>'
         '</svg>'
     )
     return "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode()
@@ -877,13 +1277,13 @@ def render_model_page(model_name: str) -> None:
     st.write(info["original_result"])
     st.caption("These are the previously recorded experiment results, not a new evaluation.")
 
-def render_bean_page(bean_name: str) -> None:
+def render_bean_page(bean_name: str, theme_mode: str = "System") -> None:
     description, color, note = BEAN_INFO[bean_name]
     st.markdown(f"""<div class="hero"><h1><span class="animated-icon">🫘</span> {bean_name}</h1>
     <p>Dry bean variety information</p></div>""", unsafe_allow_html=True)
     left, right = st.columns([1, 1.4], vertical_alignment="center")
     with left:
-        st.markdown(f'<img class="bean-illustration" src="{bean_svg(bean_name, color)}" alt="{bean_name} bean illustration"/>',
+        st.markdown(f'<img class="bean-illustration" src="{bean_svg(bean_name, color, theme_mode)}" alt="{bean_name} bean illustration"/>',
                     unsafe_allow_html=True)
     with right:
         st.markdown("### Appearance")
@@ -898,7 +1298,7 @@ if selected_page != "🏠 Dashboard":
     if selected_page.startswith("🤖 "):
         render_model_page(selected_page[2:])
     else:
-        render_bean_page(selected_page[2:])
+        render_bean_page(selected_page[2:], selected_theme)
     st.markdown("""<div class="page-end"><div class="animated-icon" style="font-size:2.2rem">🌱</div>
     <h2>Keep exploring machine learning</h2><p>Select another page from the left navigation.</p></div>""",
                 unsafe_allow_html=True)
@@ -1070,6 +1470,7 @@ if evaluation_view == "Selected model deep dive":
         selected_predictions,
         class_names,
         f"{selected_model_name} — Confusion Matrix",
+        theme_mode=selected_theme,
     )
 
     st.markdown("## 6. Classification report")
@@ -1173,6 +1574,7 @@ else:
         report_predictions,
         class_names,
         f"{report_model_name} — Confusion Matrix",
+        theme_mode=selected_theme,
     )
 
     st.markdown("### Classification report")
