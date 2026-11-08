@@ -1,8 +1,6 @@
 # DRY BEAN CLASSIFICATION STUDIO
 # Streamlit application using saved models only (no model retraining).
 
-from pathlib import Path
-
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,9 +30,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-BASE_DIR = Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd()
-MODEL_DIR = BASE_DIR / "saved_models"
-PREPROCESSING_DIR = BASE_DIR / "preprocessing"
+# Keep these folders beside this Streamlit script.
+# Run Streamlit from the project folder so these relative paths resolve.
+MODEL_DIR = "saved_models"
+PREPROCESSING_FILE = "preprocessing/preprocessing_artifacts.joblib"
 
 MODEL_FILES = {
     "Logistic Regression": "logistic_regression.joblib",
@@ -902,18 +901,12 @@ def inject_custom_css(mode: str) -> None:
 
 @st.cache_resource
 def load_artifacts():
-    artifact_path = PREPROCESSING_DIR / "preprocessing_artifacts.joblib"
-    if not artifact_path.exists():
-        raise FileNotFoundError(f"Preprocessing file not found: {artifact_path}")
-
-    artifacts = joblib.load(artifact_path)
+    artifacts = joblib.load(PREPROCESSING_FILE)
 
     loaded_models = {}
     for model_name, filename in MODEL_FILES.items():
-        model_path = MODEL_DIR / filename
-        if not model_path.exists():
-            raise FileNotFoundError(f"Model file not found: {model_path}")
-        loaded_models[model_name] = joblib.load(model_path)
+        model_file = f"{MODEL_DIR}/{filename}"
+        loaded_models[model_name] = joblib.load(model_file)
 
     return artifacts, loaded_models
 
@@ -1548,7 +1541,109 @@ else:
     )
 
     st.markdown("### Compare models by metric")
-    st.bar_chart(comparison_df, height=420)
+    st.caption(
+        "Each model has six separate bars, one for every evaluation metric. "
+        "All metrics are shown on the same score scale."
+    )
+
+    # Create a grouped vertical bar chart instead of a stacked chart.
+    metric_order = [
+        "Accuracy",
+        "AUC",
+        "Precision",
+        "Recall",
+        "F1 Score",
+        "MCC",
+    ]
+    plot_df = comparison_df.reindex(columns=metric_order)
+
+    model_names = plot_df.index.tolist()
+    metric_names = plot_df.columns.tolist()
+    x_positions = np.arange(len(model_names))
+    bar_width = 0.12
+    group_width = bar_width * len(metric_names)
+
+    metric_colors = [
+        "#2563eb",  # Accuracy
+        "#38bdf8",  # AUC
+        "#14b8a6",  # Precision
+        "#a78bfa",  # Recall
+        "#f59e0b",  # F1 Score
+        "#ef4444",  # MCC
+    ]
+
+    if selected_theme == "Dark":
+        chart_bg = "#191b20"
+        chart_text = "#f2f4f3"
+        chart_grid = "#454952"
+    else:
+        chart_bg = "#ffffff"
+        chart_text = "#18251e"
+        chart_grid = "#d9e0dc"
+
+    fig, ax = plt.subplots(figsize=(13, 5.5), facecolor=chart_bg)
+    ax.set_facecolor(chart_bg)
+
+    for metric_index, metric_name in enumerate(metric_names):
+        offsets = (
+            x_positions
+            - group_width / 2
+            + metric_index * bar_width
+            + bar_width / 2
+        )
+        ax.bar(
+            offsets,
+            plot_df[metric_name].to_numpy(dtype=float),
+            width=bar_width * 0.92,
+            label=metric_name,
+            color=metric_colors[metric_index],
+            edgecolor=chart_bg,
+            linewidth=0.5,
+        )
+
+    # MCC can be negative, so include zero and keep the chart within
+    # the valid overall metric range where possible.
+    finite_values = plot_df.to_numpy(dtype=float)
+    finite_values = finite_values[np.isfinite(finite_values)]
+    lower_limit = min(0.0, float(finite_values.min()) - 0.05) if finite_values.size else 0.0
+    ax.set_ylim(lower_limit, 1.05)
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(model_names, rotation=15, ha="right", color=chart_text)
+    ax.set_ylabel("Performance score", color=chart_text, fontweight="bold")
+    ax.set_xlabel(
+        "Machine learning models",
+        color=chart_text,
+        fontweight="bold",
+        labelpad=22,
+    )
+    ax.set_title(
+        "Five-Model Performance Comparison",
+        color=chart_text,
+        fontsize=14,
+        fontweight="bold",
+        pad=14,
+    )
+    ax.tick_params(axis="y", colors=chart_text)
+    ax.grid(axis="y", linestyle="--", alpha=0.45, color=chart_grid)
+    ax.set_axisbelow(True)
+
+    for spine in ax.spines.values():
+        spine.set_color(chart_grid)
+
+    legend = ax.legend(
+        title="Evaluation metrics",
+        ncol=3,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.34),
+        frameon=False,
+    )
+    plt.setp(legend.get_texts(), color=chart_text)
+    legend.get_title().set_color(chart_text)
+
+    # Reserve extra space below the x-axis label for the legend.
+    fig.subplots_adjust(bottom=0.34)
+    st.pyplot(fig, use_container_width=True)
+    plt.close(fig)
 
     st.download_button(
         "⬇️ Download five-model comparison",
