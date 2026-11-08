@@ -32,7 +32,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-BASE_DIR = Path(_file_).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd()
 MODEL_DIR = BASE_DIR / "saved_models"
 PREPROCESSING_DIR = BASE_DIR / "preprocessing"
 
@@ -846,25 +846,34 @@ def inject_custom_css(mode: str) -> None:
         -webkit-text-fill-color: #ffffff !important;
     }}
 
-    /* Tooltips */
+    /* Tooltips - Reset outer popper positioning wrappers to prevent multiple nested boxes */
     [data-baseweb="tooltip"],
     [data-baseweb="tooltip"] > div,
-    [data-testid="stTooltipContent"],
     [role="tooltip"] {{
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }}
+
+    /* Apply single clean card strictly to the innermost tooltip content box */
+    [data-testid="stTooltipContent"],
+    [data-baseweb="tooltip"] [data-testid="stTooltipContent"] {{
         background: var(--surface2) !important;
         background-color: var(--surface2) !important;
         color: var(--text) !important;
         border: 1px solid var(--border) !important;
-        border-radius: 9px !important;
-        padding: 10px 13px !important;
-        box-shadow: 0 5px 18px rgba(0, 0, 0, 0.25) !important;
-        font-size: 0.85rem !important;
+        border-radius: 8px !important;
+        padding: 6px 12px !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16) !important;
+        font-size: 0.84rem !important;
         font-weight: 500 !important;
+        line-height: 1.35 !important;
     }}
 
-    [data-baseweb="tooltip"] *,
     [data-testid="stTooltipContent"] *,
-    [role="tooltip"] * {{
+    [data-baseweb="tooltip"] [data-testid="stTooltipContent"] * {{
         color: var(--text) !important;
         -webkit-text-fill-color: var(--text) !important;
     }}
@@ -966,10 +975,10 @@ def show_model_explanation(model_name, metrics=None):
     st.caption(info["subtitle"])
 
     with st.expander("📘 Model explanation — how does it work?", expanded=True):
-        st.markdown(f"*Core concept*  \n{info['concept']}")
-        st.markdown(f"*Typical workflow*  \n{info['workflow']}")
-        st.markdown(f"*Strengths*  \n{info['strengths']}")
-        st.markdown(f"*Limitations*  \n{info['limitations']}")
+        st.markdown(f"**Core concept**  \n{info['concept']}")
+        st.markdown(f"**Typical workflow**  \n{info['workflow']}")
+        st.markdown(f"**Strengths**  \n{info['strengths']}")
+        st.markdown(f"**Limitations**  \n{info['limitations']}")
         st.info(info["original_result"])
 
     if metrics is not None:
@@ -977,7 +986,7 @@ def show_model_explanation(model_name, metrics=None):
             for metric_name, description in METRIC_INFO.items():
                 value = metrics[metric_name]
                 value_text = "N/A" if pd.isna(value) else f"{value:.4f}"
-                st.markdown(f"*{metric_name}: {value_text}* — {description}")
+                st.markdown(f"**{metric_name}: {value_text}** — {description}")
 
 
 def show_confusion_matrix(y_true, y_pred, class_names, title, theme_mode: str = "System"):
@@ -1145,9 +1154,9 @@ with st.sidebar:
               on_click=go_to_home, use_container_width=True,
               help="Home")
     nav_left, nav_right = st.columns(2)
-    nav_left.button("◀️", key="sidebar_back_button", on_click=go_to_previous,
+    nav_left.button("◀", key="sidebar_back_button", on_click=go_to_previous,
                     use_container_width=True, help="Previous Page")
-    nav_right.button("▶️", key="sidebar_forward_button", on_click=go_to_next,
+    nav_right.button("▶", key="sidebar_forward_button", on_click=go_to_next,
                      use_container_width=True, help="Next Page")
     st.divider()
 
@@ -1160,17 +1169,17 @@ with st.sidebar:
 
     st.markdown("## 📌 Project Information")
     st.markdown("""
-    *Project:* Dry Bean Classification
+    **Project:** Dry Bean Classification
 
-    *Dataset:* UCI Dry Bean Dataset
+    **Dataset:** UCI Dry Bean Dataset
 
-    *Classification:* Multiclass
+    **Classification:** Multiclass
 
-    *Input Features:* 17
+    **Input Features:** 17
 
-    *Bean Classes:* 7
+    **Bean Classes:** 7
 
-    *Trained Models:* 5
+    **Trained Models:** 5
     """)
 
     st.divider()
